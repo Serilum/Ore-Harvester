@@ -6,7 +6,7 @@ logoFile="icon.png"
 
 [[mods]]
 modId="oreharvester"
-version="1.0"
+version="1.1"
 displayName="Ore Harvester"
 displayURL="https://serilum.com/mod/ore-harvester"
 authors="Rick South"
