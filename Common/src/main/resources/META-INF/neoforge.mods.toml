@@ -6,7 +6,7 @@ logoFile="icon.png"
 
 [[mods]]
 modId="oreharvester"
-version="1.0"
+version="1.1"
 displayName="Ore Harvester"
 displayURL="https://curseforge.com/minecraft/mc-mods/ore-harvester"
 authors="Rick South"
