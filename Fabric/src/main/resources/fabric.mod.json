@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "oreharvester",
-  "version": "1.1",
+  "version": "1.2",
 
   "name": "Ore Harvester",
   "description": "Harvest entire ore veins instantly and drop ore items at the initial block position. Highly configurable.",
@@ -23,7 +23,7 @@
     "fabric": "*",
     "minecraft": ">=1.20",
     "java": ">=17",
-    "collective": ">=7.60"
+    "collective": ">=7.61"
   },
 
   "custom": {
