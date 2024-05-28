@@ -6,7 +6,7 @@ logoFile="icon.png"
 
 [[mods]]
 modId="oreharvester"
-version="1.1"
+version="1.2"
 displayName="Ore Harvester"
 displayURL="https://serilum.com/mod/ore-harvester"
 authors="Rick South"
@@ -23,7 +23,7 @@ If you would like to contribute too, check out https://serilum.com/donate. Appre
     modId="collective"
     type="required"
     mandatory=true
-    versionRange="[7.60,)"
+    versionRange="[7.61,)"
     ordering="NONE"
     side="BOTH"
 
