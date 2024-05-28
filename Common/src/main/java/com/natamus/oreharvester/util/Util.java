@@ -3,6 +3,7 @@ package com.natamus.oreharvester.util;
 import com.natamus.collective.functions.BlockFunctions;
 import com.natamus.collective.functions.BlockPosFunctions;
 import com.natamus.collective.services.Services;
+import com.natamus.oreharvester.config.ConfigHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -26,7 +27,7 @@ public class Util {
 		return isOre(block.defaultBlockState(), block);
 	}
 	public static boolean isOre(BlockState blockState, Block block) {
-		return Services.BLOCKTAGS.isOre(blockState) || block.equals(Blocks.ANCIENT_DEBRIS);
+		return Services.BLOCKTAGS.isOre(blockState, ConfigHandler.enableFuzzyOreSearch) || block.equals(Blocks.ANCIENT_DEBRIS);
 	}
 
 	public static @Nullable Item getOreDrop(Level level, BlockState blockState, Block block, ItemStack itemStack, Player player, Vec3 origin) {

@@ -12,6 +12,7 @@ public class ConfigHandler extends DuskConfig {
 
 	@Entry public static boolean oreHarvestWithoutSneak = false;
 	@Entry public static boolean dropOresAtFirstBrokenBlock = true;
+	@Entry public static boolean enableFuzzyOreSearch = true;
 	@Entry public static boolean loseDurabilityPerHarvestedOre = true;
 	@Entry(min = 0.001, max = 1.0) public static double loseDurabilityModifier = 1.0;
 	@Entry public static boolean increaseExhaustionPerHarvestedOre = true;
@@ -25,6 +26,9 @@ public class ConfigHandler extends DuskConfig {
 		));
 		configMetaData.put("dropOresAtFirstBrokenBlock", Arrays.asList(
 			"Whether all ore drops in a mined vein should drop at the first broken block's position."
+		));
+		configMetaData.put("enableFuzzyOreSearch", Arrays.asList(
+			"With fuzzy search enabled, it uses a block's raw name to determine whether it's an ore block. Improves compatibility with other mods that have not set a block tag, but does create a small chance of a false positive."
 		));
 		configMetaData.put("loseDurabilityPerHarvestedOre", Arrays.asList(
 			"If enabled, for every ore harvested, the held pickaxe loses durability."
