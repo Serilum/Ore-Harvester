@@ -51,7 +51,9 @@ public class WorldEvents {
 			}
 
 			if (lowBlockPos.closerThan(new BlockPos(lastDropPos.getX(), 1, lastDropPos.getZ()), 20)) {
-				entity.teleportTo(lastDropPos.getX(), lastDropPos.getY()+1, lastDropPos.getZ());
+				entity.setDeltaMovement(0, 0, 0);
+				entity.teleportTo(lastDropPos.getX()+0.5, lastDropPos.getY()+0.5, lastDropPos.getZ()+0.5);
+				
 				Variables.lastAction.put(lastDropPos.immutable(), now);
 			}
 		}
