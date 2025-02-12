@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "oreharvester",
-  "version": "1.4",
+  "version": "1.5",
 
   "name": "Ore Harvester",
   "description": "Harvest entire ore veins instantly and drop ore items at the initial block position. Highly configurable.",
@@ -23,7 +23,7 @@
     "fabric": "*",
     "minecraft": ">=1.21",
     "java": ">=21",
-    "collective": ">=7.80"
+    "collective": ">=7.91"
   },
 
   "custom": {
@@ -45,9 +45,11 @@
 	  " Andrean Olgo",
 	  " aternosorg",
 	  " Cherriesaurus",
+	  " David Sanchez",
+	  " drdog111",
 	  " Michael W. S.",
-	  " Nahuel Fernandez",
-	  " Shana Gitnick",
-	  " Tyler Behl"
+	  " t128",
+	  " Tyler Behl",
+	  " XAgent"
   ]
 }
