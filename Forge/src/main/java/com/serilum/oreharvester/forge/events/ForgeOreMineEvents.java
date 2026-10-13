@@ -15,8 +15,10 @@ public class ForgeOreMineEvents {
 		if (level == null) {
 			return;
 		}
-		
-		OreMineEvents.onOreHarvest(level, e.getPlayer(), e.getPos(), e.getState(), null);
+
+		if (!OreMineEvents.onOreHarvest(level, e.getPlayer(), e.getPos(), e.getState(), null)) {
+			e.setCanceled(true);
+		}
 	}
 
 	@SubscribeEvent

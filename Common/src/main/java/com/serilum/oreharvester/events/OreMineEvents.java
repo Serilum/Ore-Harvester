@@ -3,11 +3,14 @@ package com.serilum.oreharvester.events;
 import com.mojang.datafixers.util.Pair;
 import com.natamus.collective.functions.BlockFunctions;
 import com.natamus.collective.functions.ItemFunctions;
+import com.natamus.collective.services.Services;
 import com.serilum.oreharvester.config.ConfigHandler;
+import com.serilum.oreharvester.data.HarvestAttempt;
 import com.serilum.oreharvester.data.Variables;
 import com.serilum.oreharvester.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -26,36 +29,35 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class OreMineEvents {
 	public static boolean onOreHarvest(Level level, Player player, BlockPos blockPos, BlockState blockState, BlockEntity blockEntity) {
-		if (level.isClientSide) {
+		if (level.isClientSide || Variables.isHarvestingVein) {
 			return true;
 		}
 
-		Pair<Level, Player> cachePair = new Pair<Level, Player>(level, player);
-		if (!Variables.harvestSpeedCache.containsKey(cachePair)) {
-			if (ConfigHandler.oreHarvestWithoutSneak) {
-				if (player.isCrouching()) {
-					return true;
-				}
-			} else {
-				if (!player.isCrouching()) {
-					return true;
-				}
-			}
+		Pair<Level, Player> attemptKey = new Pair<Level, Player>(level, player);
+		HarvestAttempt attempt = Variables.harvestAttempts.remove(attemptKey);
+
+		boolean isOreHarvest;
+		if (attempt != null && attempt.pos.equals(blockPos) && isRecent(attempt, player)) {
+			isOreHarvest = attempt.isOreHarvest;
 		}
 		else {
-			Variables.harvestSpeedCache.remove(cachePair);
+			isOreHarvest = Util.wantsToHarvestVein(player);
+		}
+
+		if (!isOreHarvest) {
+			return true;
 		}
 
 		Block block = blockState.getBlock();
 		if (!Util.isOre(block)) {
 			return true;
 		}
-		
-		ItemStack handStack = player.getItemInHand(InteractionHand.MAIN_HAND);
-		if (!Variables.allowedPickaxes.contains(handStack.getItem())) {
+
+		if (!Util.canHarvestVeinWith(player, blockState)) {
 			return true;
 		}
 
+		ItemStack handStack = player.getItemInHand(InteractionHand.MAIN_HAND);
 		List<BlockPos> oresAround = Util.getOresNextToEachOther(level, blockPos, block);
 
 		int oreCount = oresAround.size();
@@ -64,29 +66,69 @@ public class OreMineEvents {
 		}
 
 		if (ConfigHandler.dropOresAtFirstBrokenBlock) {
-			Item oreItem = Util.getOreDrop(level, blockState, block, handStack, player, Vec3.atCenterOf(blockPos));
-			if (!Variables.lastDropLocations.containsKey(oreItem)) {
-				Variables.lastDropLocations.put(oreItem, new CopyOnWriteArrayList<BlockPos>());
-			}
-
 			BlockPos immutableBlockPos = blockPos.immutable();
-			Variables.lastDropLocations.get(oreItem).add(immutableBlockPos);
+			for (BlockState oreState : Util.getDistinctBlockStates(level, oresAround)) {
+				for (Item oreItem : Util.getOreDropItems(level, oreState, handStack, player, Vec3.atCenterOf(blockPos))) {
+					if (!Variables.lastDropLocations.containsKey(oreItem)) {
+						Variables.lastDropLocations.put(oreItem, new CopyOnWriteArrayList<BlockPos>());
+					}
+
+					CopyOnWriteArrayList<BlockPos> dropLocations = Variables.lastDropLocations.get(oreItem);
+					if (!dropLocations.contains(immutableBlockPos)) {
+						dropLocations.add(immutableBlockPos);
+					}
+				}
+			}
 			Variables.lastAction.put(immutableBlockPos, new Date());
 		}
-		
+
+		Variables.isHarvestingVein = true;
+		try {
+			if (!isBreakAllowed(level, player, blockPos, blockState)) {
+				return false;
+			}
+
+			harvestOres(level, (ServerPlayer)player, blockPos, oresAround, handStack);
+		}
+		finally {
+			Variables.isHarvestingVein = false;
+		}
+
+		return false;
+	}
+
+	private static void harvestOres(Level level, ServerPlayer serverPlayer, BlockPos firstOrePos, List<BlockPos> oresAround, ItemStack handStack) {
 		int durabilityLoseCount = (int)Math.ceil(1.0 / ConfigHandler.loseDurabilityModifier);
 		int durabilityStartCount = -1;
 
-		ServerPlayer serverPlayer = (ServerPlayer)player;
-
 		for (BlockPos orePos : oresAround) {
-			BlockState logstate = level.getBlockState(orePos);
-			Block log = logstate.getBlock();
+			if (!level.mayInteract(serverPlayer, orePos)) {
+				continue;
+			}
 
-			BlockFunctions.dropBlock(level, orePos, player, handStack);
-			//ForgeEventFactory.onEntityDestroyBlock(player, orePos, logstate);
+			BlockState oreState = level.getBlockState(orePos);
+			if (!orePos.equals(firstOrePos) && !isBreakAllowed(level, serverPlayer, orePos, oreState)) {
+				continue;
+			}
 
-			if (!player.isCreative()) {
+			if (!level.getBlockState(orePos).equals(oreState)) {
+				continue;
+			}
+
+			if (serverPlayer.isCreative()) {
+				level.removeBlock(orePos, false);
+			}
+			else {
+				BlockFunctions.dropBlock(level, orePos, serverPlayer, handStack);
+			}
+
+			if (ConfigHandler.triggerBlockBreakEventPerHarvestedOre) {
+				Services.EVENTTRIGGER.triggerAfterBlockBreakEvent(level, serverPlayer, orePos, oreState, null);
+			}
+
+			if (!serverPlayer.isCreative()) {
+				serverPlayer.awardStat(Stats.BLOCK_MINED.get(oreState.getBlock()));
+
 				if (ConfigHandler.loseDurabilityPerHarvestedOre) {
 					if (durabilityStartCount == -1) {
 						durabilityStartCount = durabilityLoseCount;
@@ -102,12 +144,21 @@ public class OreMineEvents {
 					}
 				}
 				if (ConfigHandler.increaseExhaustionPerHarvestedOre) {
-					player.causeFoodExhaustion(0.025F * (float)ConfigHandler.increaseExhaustionModifier);
+					serverPlayer.causeFoodExhaustion(0.025F * (float)ConfigHandler.increaseExhaustionModifier);
 				}
 			}
-		}
 
-		return false;
+			if (handStack.isEmpty()) {
+				break;
+			}
+		}
+	}
+
+	private static boolean isBreakAllowed(Level level, Player player, BlockPos pos, BlockState state) {
+		if (!ConfigHandler.triggerBlockBreakEventPerHarvestedOre) {
+			return true;
+		}
+		return Services.EVENTTRIGGER.triggerBlockBreakEvent(level, player, pos, state);
 	}
 
 	public static float onHarvestBreakSpeed(Level level, Player player, float digSpeed, BlockState state) {
@@ -120,36 +171,8 @@ public class OreMineEvents {
 			return digSpeed;
 		}
 
-		if (ConfigHandler.oreHarvestWithoutSneak) {
-			if (player.isCrouching()) {
-				return digSpeed;
-			}
-		}
-		else {
-			if (!player.isCrouching()) {
-				return digSpeed;
-			}
-		}
-
-		ItemStack handStack = player.getItemInHand(InteractionHand.MAIN_HAND);
-		if (!Variables.allowedPickaxes.contains(handStack.getItem())) {
+		if (!Util.canHarvestVeinWith(player, state)) {
 			return digSpeed;
-		}
-
-		int oreCount = -1;
-
-		Date now = new Date();
-		Pair<Level, Player> keyPair = new Pair<Level, Player>(level, player);
-		if (Variables.harvestSpeedCache.containsKey(keyPair)) {
-			Pair<Date, Integer> valuePair = Variables.harvestSpeedCache.get(keyPair);
-			long ms = (now.getTime()-valuePair.getFirst().getTime());
-
-			if (ms < 1000) {
-				oreCount = valuePair.getSecond();
-			}
-			else {
-				Variables.harvestSpeedCache.remove(keyPair);
-			}
 		}
 
 		BlockPos blockPos = null;
@@ -163,19 +186,37 @@ public class OreMineEvents {
 			return digSpeed;
 		}
 
-		boolean recheck = false;
-		if (oreCount < 0) {
-			List<BlockPos> oresAround = Util.getOresNextToEachOther(level, blockPos, block);
-
-			oreCount = oresAround.size();
-			if (oreCount == 0) {
-				return digSpeed;
-			}
-
-			Variables.harvestSpeedCache.put(keyPair, new Pair<Date, Integer>(now, oreCount));
-			recheck = true;
+		HarvestAttempt attempt = getOrStartHarvestAttempt(level, player, blockPos, block);
+		if (!attempt.isOreHarvest || attempt.oreCount <= 0) {
+			return digSpeed;
 		}
 
-		return digSpeed/(1+(oreCount * (float)ConfigHandler.increasedHarvestingTimePerOreModifier));
+		return digSpeed/(1+(attempt.oreCount * (float)ConfigHandler.increasedHarvestingTimePerOreModifier));
+	}
+
+	private static HarvestAttempt getOrStartHarvestAttempt(Level level, Player player, BlockPos blockPos, Block block) {
+		Pair<Level, Player> attemptKey = new Pair<Level, Player>(level, player);
+
+		HarvestAttempt attempt = Variables.harvestAttempts.get(attemptKey);
+		if (attempt != null && attempt.pos.equals(blockPos) && isRecent(attempt, player)) {
+			attempt.lastSeenTick = player.tickCount;
+			return attempt;
+		}
+
+		boolean isOreHarvest = Util.wantsToHarvestVein(player);
+
+		int oreCount = -1;
+		if (isOreHarvest) {
+			oreCount = Util.getOresNextToEachOther(level, blockPos, block).size();
+		}
+
+		attempt = new HarvestAttempt(blockPos.immutable(), isOreHarvest, oreCount, player.tickCount);
+		Variables.harvestAttempts.keySet().removeIf(key -> key.getSecond().isRemoved());
+		Variables.harvestAttempts.put(attemptKey, attempt);
+		return attempt;
+	}
+
+	private static boolean isRecent(HarvestAttempt attempt, Player player) {
+		return player.tickCount - attempt.lastSeenTick <= 2;
 	}
 }
