@@ -17,13 +17,13 @@ public class ForgeOreMineEvents {
 	}
 
 	@SubscribeEvent
-	public static void onOreHarvest(BlockEvent.BreakEvent e) {
+	public static boolean onOreHarvest(BlockEvent.BreakEvent e) {
 		Level level = WorldFunctions.getWorldIfInstanceOfAndNotRemote(e.getLevel());
 		if (level == null) {
-			return;
+			return false;
 		}
-		
-		OreMineEvents.onOreHarvest(level, e.getPlayer(), e.getPos(), e.getState(), null);
+
+		return !OreMineEvents.onOreHarvest(level, e.getPlayer(), e.getPos(), e.getState(), null);
 	}
 
 	@SubscribeEvent
