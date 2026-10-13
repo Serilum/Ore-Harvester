@@ -1,0 +1,33 @@
+package com.serilum.oreharvester.processing;
+
+import com.serilum.oreharvester.config.ConfigHandler;
+import com.serilum.oreharvester.data.Variables;
+import com.serilum.oreharvester.util.Util;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+
+import java.util.HashSet;
+import java.util.Set;
+
+public class PickaxeWhitelist {
+	public static void processPickaxeWhitelist(Level level) {
+		Registry<Item> itemRegistry = level.registryAccess().lookupOrThrow(Registries.ITEM);
+
+		Set<Item> whitelistedPickaxes = new HashSet<>();
+		for (Item item : itemRegistry) {
+			Identifier rl = itemRegistry.getKey(item);
+			if (rl == null) {
+				continue;
+			}
+
+			if (Util.isInIdList(ConfigHandler.pickaxeWhitelist, rl.toString())) {
+				whitelistedPickaxes.add(item);
+			}
+		}
+
+		Variables.whitelistedPickaxes = whitelistedPickaxes;
+	}
+}
