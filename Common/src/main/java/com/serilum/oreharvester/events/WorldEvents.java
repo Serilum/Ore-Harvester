@@ -2,7 +2,9 @@ package com.serilum.oreharvester.events;
 
 import com.serilum.oreharvester.config.ConfigHandler;
 import com.serilum.oreharvester.data.Variables;
+import com.serilum.oreharvester.processing.OreBlockLists;
 import com.serilum.oreharvester.processing.PickaxeBlacklist;
+import com.serilum.oreharvester.processing.PickaxeWhitelist;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -14,6 +16,8 @@ import java.util.Date;
 public class WorldEvents {
 	public static void onWorldLoad(Level level) {
 		PickaxeBlacklist.attemptProcessingPickaxeBlacklist(level);
+		OreBlockLists.processOreBlockLists(level);
+		PickaxeWhitelist.processPickaxeWhitelist(level);
 	}
 
 	public static void onItemEntityJoinWorld(Level world, Entity entity) {
