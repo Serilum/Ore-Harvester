@@ -13,9 +13,9 @@ public class ConfigHandler extends DuskConfig {
 	@Entry public static boolean oreHarvestWithoutSneak = false;
 	@Entry public static boolean dropOresAtFirstBrokenBlock = true;
 	@Entry public static boolean enableFuzzyOreSearch = true;
-	@Entry public static String oreBlockWhitelist = "";
-	@Entry public static String oreBlockBlacklist = "";
-	@Entry public static String pickaxeWhitelist = "easy_emerald:*_paxel,piercingpaxels:*_paxel,randomisfits:*_hammer,randomisfits:*_multitool,tetra:modular_double";
+	@Entry(registry = "block", filter = "ores") public static String oreBlockWhitelist = "";
+	@Entry(registry = "block", filter = "ores") public static String oreBlockBlacklist = "";
+	@Entry(registry = "item", filter = "tools") public static String pickaxeWhitelist = "easy_emerald:*_paxel,piercingpaxels:*_paxel,randomisfits:*_hammer,randomisfits:*_multitool,tetra:modular_double";
 	@Entry(min = 1, max = 10000) public static int maxOresPerVein = 1000;
 	@Entry public static boolean triggerBlockBreakEventPerHarvestedOre = true;
 	@Entry public static boolean loseDurabilityPerHarvestedOre = true;
