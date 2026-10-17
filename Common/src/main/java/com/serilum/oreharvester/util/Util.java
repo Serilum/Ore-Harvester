@@ -22,9 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 public class Util {
 	public static boolean isOre(BlockState blockState) {
@@ -89,31 +87,6 @@ public class Util {
 			return true;
 		}
 		return handStack.isCorrectToolForDrops(blockState);
-	}
-
-	public static boolean isInIdList(String idList, String id) {
-		String idPath = id.substring(id.indexOf(':') + 1);
-
-		for (String rawEntry : idList.split(",")) {
-			String entry = rawEntry.strip().toLowerCase(Locale.ROOT);
-			if (entry.isEmpty()) {
-				continue;
-			}
-
-			String comparedId = idPath;
-			if (entry.contains(":")) {
-				comparedId = id;
-			}
-
-			if (comparedId.matches(wildcardToRegex(entry))) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static String wildcardToRegex(String entry) {
-		return Pattern.quote(entry).replace("*", "\\E.*\\Q");
 	}
 
 	public static List<Item> getOreDropItems(Level level, BlockState blockState, ItemStack itemStack, Player player, Vec3 origin) {

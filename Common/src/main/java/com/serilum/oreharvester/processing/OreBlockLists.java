@@ -1,8 +1,8 @@
 package com.serilum.oreharvester.processing;
 
+import com.natamus.collective.functions.ConfigFunctions;
 import com.serilum.oreharvester.config.ConfigHandler;
 import com.serilum.oreharvester.data.Variables;
-import com.serilum.oreharvester.util.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -25,10 +25,10 @@ public class OreBlockLists {
 			}
 
 			String blockId = rl.toString();
-			if (Util.isInIdList(ConfigHandler.oreBlockWhitelist, blockId)) {
+			if (ConfigFunctions.isInIdList(ConfigHandler.oreBlockWhitelist, blockId)) {
 				whitelistedOreBlocks.add(block);
 			}
-			if (Util.isInIdList(ConfigHandler.oreBlockBlacklist, blockId)) {
+			if (ConfigFunctions.isInIdList(ConfigHandler.oreBlockBlacklist, blockId)) {
 				blacklistedOreBlocks.add(block);
 			}
 		}

@@ -1,8 +1,8 @@
 package com.serilum.oreharvester.processing;
 
+import com.natamus.collective.functions.ConfigFunctions;
 import com.serilum.oreharvester.config.ConfigHandler;
 import com.serilum.oreharvester.data.Variables;
-import com.serilum.oreharvester.util.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -23,7 +23,7 @@ public class PickaxeWhitelist {
 				continue;
 			}
 
-			if (Util.isInIdList(ConfigHandler.pickaxeWhitelist, rl.toString())) {
+			if (ConfigFunctions.isInIdList(ConfigHandler.pickaxeWhitelist, rl.toString())) {
 				whitelistedPickaxes.add(item);
 			}
 		}
